@@ -28,7 +28,11 @@ using System.Windows.Forms;
 
 using Microsoft.Win32; // for Registry
 
-using Foole.Net; // For Listener
+using Foole.Net;
+using Foole.WC3Proxy.ApplicationServices;
+using Foole.WC3Proxy.Models;
+
+// For Listener
 
 namespace Foole.WC3Proxy
 {
@@ -55,6 +59,10 @@ namespace Foole.WC3Proxy
 
         private delegate void SimpleDelegate();
 
+        private static readonly ServerConfigurationRepository _serverConfigurationRepository = new ServerConfigurationRepository();
+
+        private readonly ServerConfiguration _serverConfiguration;
+
         // TODO: Configurable command line arguments for war3?
         // window       Windowed mode
         // fullscreen   (Default)
@@ -68,62 +76,51 @@ namespace Foole.WC3Proxy
 
         static void Main(string[] args)
         {
-            IPAddress serverhostIp = null;
-            byte version = 0;
-            bool expansion = false;
+            var serverConfiguration = _serverConfigurationRepository.Get();
 
-            string serverIp = (string)Registry.GetValue(mRegPath, "ServerIP", null);
-            if (serverIp != null)
+            if (serverConfiguration == null)
             {
-                expansion = ((int)Registry.GetValue(mRegPath, "Expansion", 0)) != 0;
-                try
+                serverConfiguration = new ServerConfiguration();
+                if (ShowInfoDialog(serverConfiguration) == false)
                 {
-                    serverhostIp = IPAddress.Parse(serverIp);
+                    return;
                 }
-                catch { }
-
-                version = (byte)(int)Registry.GetValue(mRegPath, "WC3Version", 0);
             }
 
-            if (serverhostIp == null || version == 0)
-                if (ShowInfoDialog(ref serverhostIp, ref version, ref expansion) == false) return;
-
-            MainForm mainform = new MainForm(serverhostIp, version, expansion);
+            MainForm mainform = new MainForm(serverConfiguration);
 
             Application.Run(mainform);
         }
 
-        private static bool ShowInfoDialog(ref IPAddress Host, ref byte Version, ref bool Expansion)
+        private static bool ShowInfoDialog(ServerConfiguration serverConfiguration)
         {
             ServerInfoDlg dlg = new ServerInfoDlg();
-            if (Host != null)
+
+            if (serverConfiguration != null)
             {
-                dlg.Host = Host;
-                dlg.Expansion = Expansion;
-                dlg.Version = Version;
+                dlg.Host = serverConfiguration.Host;
+                dlg.Expansion = serverConfiguration.Expansion;
+                dlg.Version = serverConfiguration.Version;
             }
             if (dlg.ShowDialog() == DialogResult.Cancel)
                 return false;
 
-            Host = dlg.Host;
-            Version = dlg.Version;
-            Expansion = dlg.Expansion;
+            serverConfiguration.Host = dlg.Host;
+            serverConfiguration.Version = dlg.Version;
+            serverConfiguration.Expansion = dlg.Expansion;
             dlg.Dispose();
-
-            // TODO: Should this store the ip address or the hostname?
-            Registry.SetValue(mRegPath, "ServerIP", Host.ToString(), RegistryValueKind.String);
-            Registry.SetValue(mRegPath, "Expansion", Expansion ? 1 : 0, RegistryValueKind.DWord);
-            Registry.SetValue(mRegPath, "WC3Version", Version, RegistryValueKind.DWord);
+            
             return true;
         }
 
-        public MainForm(IPAddress ServerHost, byte Version, bool Expansion)
+        public MainForm(ServerConfiguration serverConfiguration)
         {
             InitializeComponent();
+            _serverConfiguration = serverConfiguration;
 
-            this.ServerHost = ServerHost;
-            this.Version = Version;
-            this.Expansion = Expansion;
+            ServerHost = serverConfiguration.Host;
+            Version = serverConfiguration.Version;
+            Expansion = serverConfiguration.Expansion;
         }
 
         public IPAddress ServerHost
@@ -352,15 +349,11 @@ namespace Foole.WC3Proxy
 
         private void mnuChangeServer_Click(object sender, EventArgs e)
         {
-            var host = ServerHost;
-            bool expansion = Expansion;
-            byte version = Version;
-
-            if (ShowInfoDialog(ref host, ref version, ref expansion))
+            if (ShowInfoDialog(_serverConfiguration))
             {
-                ServerHost = host;
-                Version = version;
-                Expansion = expansion;
+                ServerHost = _serverConfiguration.Host;
+                Version = _serverConfiguration.Version;
+                Expansion = _serverConfiguration.Expansion;
             }
         }
 
