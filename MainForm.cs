@@ -38,7 +38,7 @@ namespace Foole.WC3Proxy
         private List<TcpProxy> mProxies; // A collection of game proxies.  Usually we would only need 1 proxy.
         private Browser mBrowser; // This sends game info queries to the server and forwards the responses to the client
 
-        private IPHostEntry mServerHost;
+        private IPAddress _serverHost;
         private IPEndPoint mServerEP;
         private byte mVersion;
         private bool mExpansion;
@@ -68,31 +68,32 @@ namespace Foole.WC3Proxy
 
         static void Main(string[] args)
         {
-            IPHostEntry serverhost = null;
+            IPAddress serverhostIp = null;
             byte version = 0;
             bool expansion = false;
 
-            string servername = (string)Registry.GetValue(mRegPath, "ServerName", null);
-            if (servername != null)
+            string serverIp = (string)Registry.GetValue(mRegPath, "ServerIP", null);
+            if (serverIp != null)
             {
                 expansion = ((int)Registry.GetValue(mRegPath, "Expansion", 0)) != 0;
                 try
                 {
-                    serverhost = Dns.GetHostEntry(servername);
-                } catch { }
+                    serverhostIp = IPAddress.Parse(serverIp);
+                }
+                catch { }
 
                 version = (byte)(int)Registry.GetValue(mRegPath, "WC3Version", 0);
             }
 
-            if (serverhost == null || version == 0)
-                if (ShowInfoDialog(ref serverhost, ref version, ref expansion) == false) return;
+            if (serverhostIp == null || version == 0)
+                if (ShowInfoDialog(ref serverhostIp, ref version, ref expansion) == false) return;
 
-            MainForm mainform = new MainForm(serverhost, version, expansion);
+            MainForm mainform = new MainForm(serverhostIp, version, expansion);
 
             Application.Run(mainform);
         }
 
-        private static bool ShowInfoDialog(ref IPHostEntry Host, ref byte Version, ref bool Expansion)
+        private static bool ShowInfoDialog(ref IPAddress Host, ref byte Version, ref bool Expansion)
         {
             ServerInfoDlg dlg = new ServerInfoDlg();
             if (Host != null)
@@ -110,13 +111,13 @@ namespace Foole.WC3Proxy
             dlg.Dispose();
 
             // TODO: Should this store the ip address or the hostname?
-            Registry.SetValue(mRegPath, "ServerName", Host.HostName, RegistryValueKind.String);
+            Registry.SetValue(mRegPath, "ServerIP", Host.ToString(), RegistryValueKind.String);
             Registry.SetValue(mRegPath, "Expansion", Expansion ? 1 : 0, RegistryValueKind.DWord);
             Registry.SetValue(mRegPath, "WC3Version", Version, RegistryValueKind.DWord);
             return true;
         }
 
-        public MainForm(IPHostEntry ServerHost, byte Version, bool Expansion)
+        public MainForm(IPAddress ServerHost, byte Version, bool Expansion)
         {
             InitializeComponent();
 
@@ -125,25 +126,19 @@ namespace Foole.WC3Proxy
             this.Expansion = Expansion;
         }
 
-        public IPHostEntry ServerHost
+        public IPAddress ServerHost
         {
-            get { return mServerHost; }
-            set 
+            get { return _serverHost; }
+            set
             {
                 OnLostGame();
 
-                mServerHost = value;
-                mServerEP = new IPEndPoint(mServerHost.AddressList[0], 0);
+                _serverHost = value;
+                mServerEP = new IPEndPoint(_serverHost, 0);
 
-                string addrdesc;
-                if (mServerHost.AddressList[0].ToString() == mServerHost.HostName)
-                    addrdesc = mServerHost.HostName;
-                else
-                    addrdesc = String.Format("{0} ({1})", mServerHost.HostName, mServerHost.AddressList[0].ToString());
+                lblServerAddress.Text = _serverHost.ToString();
 
-                lblServerAddress.Text = addrdesc;
-
-                if (mBrowser != null) mBrowser.ServerAddress = mServerHost.AddressList[0];
+                if (mBrowser != null) mBrowser.ServerAddress = _serverHost;
             }
         }
 
@@ -152,7 +147,7 @@ namespace Foole.WC3Proxy
             get { return mExpansion; }
             set
             {
-                mExpansion = value; 
+                mExpansion = value;
                 if (mBrowser != null) mBrowser.Expansion = value;
             }
         }
@@ -213,7 +208,8 @@ namespace Foole.WC3Proxy
             try
             {
                 Process.Start(program);
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 string message = string.Format("Unable to launch WC3: {0}\n{1}", e.Message, program);
                 MessageBox.Show(message, mCaption, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
@@ -240,7 +236,7 @@ namespace Foole.WC3Proxy
 
         private void StartBrowser()
         {
-            mBrowser = new Browser(ServerHost.AddressList[0], mListener.LocalEndPoint.Port, Version, Expansion);
+            mBrowser = new Browser(ServerHost, mListener.LocalEndPoint.Port, Version, Expansion);
             mBrowser.QuerySent += new QuerySentHandler(mBrowser_QuerySent);
             mBrowser.FoundServer += new FoundServerHandler(mBrowser_FoundServer);
             mBrowser.Run();
@@ -306,7 +302,7 @@ namespace Foole.WC3Proxy
 
         private void UpdateClientCount()
         {
-            if (InvokeRequired) 
+            if (InvokeRequired)
             {
                 Invoke(new SimpleDelegate(UpdateClientCount));
                 return;
@@ -356,7 +352,7 @@ namespace Foole.WC3Proxy
 
         private void mnuChangeServer_Click(object sender, EventArgs e)
         {
-            IPHostEntry host = ServerHost;
+            var host = ServerHost;
             bool expansion = Expansion;
             byte version = Version;
 

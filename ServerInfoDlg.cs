@@ -44,7 +44,7 @@ namespace Foole.WC3Proxy
 
     public partial class ServerInfoDlg : Form
     {
-        private IPHostEntry mHost;
+        private IPAddress _host;
 
         public ServerInfoDlg()
         {
@@ -59,16 +59,16 @@ namespace Foole.WC3Proxy
             cbxWC3Version.Items.Add(new WC3Version(0x1b, "1.27 (Untested)"));
         }
 
-        public IPHostEntry Host
+        public IPAddress Host
         { 
-            get { return mHost; }
+            get { return _host; }
             set 
             {
                 // TODO: Check InvokeRequired?
                 if (value == null)
                     txtServerAddress.Text = String.Empty;
                 else
-                    txtServerAddress.Text = value.HostName; 
+                    txtServerAddress.Text = value.ToString(); 
             }
         }
 
@@ -109,7 +109,7 @@ namespace Foole.WC3Proxy
             try
             {
                 this.UseWaitCursor = true;
-                mHost = Dns.GetHostEntry(txtServerAddress.Text);
+                _host = IPAddress.Parse(txtServerAddress.Text);
                 this.UseWaitCursor = false;
             } catch (Exception ex)
             {
