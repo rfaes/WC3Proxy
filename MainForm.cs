@@ -86,7 +86,7 @@ namespace Foole.WC3Proxy
                 }
             }
 
-            MainForm mainform = new MainForm(serverConfiguration, new GameService());
+            MainForm mainform = new MainForm(serverConfiguration, new GameService(new Configuration()));
 
             Application.Run(mainform);
         }
