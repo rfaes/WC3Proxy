@@ -193,7 +193,7 @@ namespace Foole.WC3Proxy
 
         private void ExecuteWC3(bool Expansion)
         {
-            if (_gameService.TryToStartGame(Expansion))
+            if (!_gameService.TryToStartGame(Expansion))
             {
                 MessageBox.Show("Unable to launch or find warcraft executable", mCaption, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
