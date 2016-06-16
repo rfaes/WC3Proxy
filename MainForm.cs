@@ -24,9 +24,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Windows.Forms;
-
-
-using Foole.Net;
 using Foole.WC3Proxy.ApplicationServices;
 using Foole.WC3Proxy.DomainServices;
 using Foole.WC3Proxy.Models;
@@ -259,7 +256,7 @@ namespace Foole.WC3Proxy
             mListener = new Listener(new GotConnectionDelegate(GotConnection));
             try
             {
-                mListener.Run();
+                mListener.Start();
             }
             catch (SocketException ex)
             {

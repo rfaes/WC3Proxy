@@ -69,11 +69,13 @@
     </Compile>
     <Compile Include="ApplicationServices\Configuration.cs" />
     <Compile Include="ApplicationServices\GameService.cs" />
+    <Compile Include="ApplicationServices\GotConnectionDelegate.cs" />
+    <Compile Include="ApplicationServices\Listener.cs" />
     <Compile Include="ApplicationServices\ServerConfigurationRepository.cs" />
     <Compile Include="Browser.cs" />
     <Compile Include="DomainServices\IGameService.cs" />
+    <Compile Include="DomainServices\IListener.cs" />
     <Compile Include="DomainServices\IServerConfigurationRepository.cs" />
-    <Compile Include="Listener.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
