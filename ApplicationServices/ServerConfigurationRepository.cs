@@ -1,10 +1,11 @@
 ﻿using System.Net;
+using Foole.WC3Proxy.DomainServices;
 using Foole.WC3Proxy.Models;
 using Microsoft.Win32;
 
 namespace Foole.WC3Proxy.ApplicationServices
 {
-    public class ServerConfigurationRepository
+    public class ServerConfigurationRepository : IServerConfigurationRepository
     {
         private static readonly string mRegPath = @"HKEY_CURRENT_USER\Software\Foole\WC3 Proxy";
         private string _wc3VersionRegistryName = "WC3Version";

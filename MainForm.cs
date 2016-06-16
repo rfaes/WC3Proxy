@@ -21,15 +21,14 @@ THE SOFTWARE.
  */
 using System;
 using System.Collections.Generic;
-using System.Diagnostics; // for Process
 using System.Net;
 using System.Net.Sockets;
 using System.Windows.Forms;
 
-using Microsoft.Win32; // for Registry
 
 using Foole.Net;
 using Foole.WC3Proxy.ApplicationServices;
+using Foole.WC3Proxy.DomainServices;
 using Foole.WC3Proxy.Models;
 
 // For Listener
@@ -61,6 +60,8 @@ namespace Foole.WC3Proxy
 
         private readonly ServerConfiguration _serverConfiguration;
 
+        private readonly IGameService _gameService;
+
         // TODO: Configurable command line arguments for war3?
         // window       Windowed mode
         // fullscreen   (Default)
@@ -85,7 +86,7 @@ namespace Foole.WC3Proxy
                 }
             }
 
-            MainForm mainform = new MainForm(serverConfiguration);
+            MainForm mainform = new MainForm(serverConfiguration, new GameService());
 
             Application.Run(mainform);
         }
@@ -107,14 +108,15 @@ namespace Foole.WC3Proxy
             serverConfiguration.Version = dlg.Version;
             serverConfiguration.Expansion = dlg.Expansion;
             dlg.Dispose();
-            
+
             return true;
         }
 
-        public MainForm(ServerConfiguration serverConfiguration)
+        public MainForm(ServerConfiguration serverConfiguration, IGameService gameService)
         {
             InitializeComponent();
             _serverConfiguration = serverConfiguration;
+            _gameService = gameService;
 
             ServerHost = serverConfiguration.Host;
             Version = serverConfiguration.Version;
@@ -191,26 +193,10 @@ namespace Foole.WC3Proxy
 
         private void ExecuteWC3(bool Expansion)
         {
-            string programkey = Expansion ? "ProgramX" : "Program";
-            string program = (string)Registry.GetValue(@"HKEY_CURRENT_USER\Software\Blizzard Entertainment\Warcraft III", programkey, null);
-
-            if (program == null)
+            if (_gameService.TryToStartGame(Expansion))
             {
-                MessageBox.Show("Unable to locate Warcraft 3 executable");
-                return;
+                MessageBox.Show("Unable to launch or find warcraft executable", mCaption, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
-
-            try
-            {
-                Process.Start(program);
-            }
-            catch (Exception e)
-            {
-                string message = string.Format("Unable to launch WC3: {0}\n{1}", e.Message, program);
-                MessageBox.Show(message, mCaption, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
-            // TODO: If the file doesnt exist, just launch war3.exe?
         }
 
         private void mnuFileExit_Click(object sender, EventArgs e)
