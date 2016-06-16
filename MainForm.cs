@@ -55,8 +55,6 @@ namespace Foole.WC3Proxy
         private readonly string mCaption = "WC3 Proxy";
         private readonly int mBalloonTipTimeout = 1000;
 
-        private static readonly string mRegPath = @"HKEY_CURRENT_USER\Software\Foole\WC3 Proxy";
-
         private delegate void SimpleDelegate();
 
         private static readonly ServerConfigurationRepository _serverConfigurationRepository = new ServerConfigurationRepository();
